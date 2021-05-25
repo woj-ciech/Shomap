@@ -4,6 +4,11 @@ It takes your query as an input, e.g. "hostname:gov.pl" and produces files neces
 
 article - https://offensiveosint.io/offensive-osint-s03-e07-shomap-advanced-shodan-visualization
 
+Redacted viz - https://woj-ciech.github.io/Shomap/shomap_viz_example.html
+
+![](https://raw.githubusercontent.com/woj-ciech/Shomap/main/Animation.gif)
+
+
 # Installation
 ```
 └─# git clone https://github.com/woj-ciech/Shodan_viz
@@ -50,5 +55,3 @@ In the same directory run http server
 
 Navigate to localhost:8080/shomap_viz.html
 
-# Screenshots
-![](https://raw.githubusercontent.com/woj-ciech/Shomap/main/Animation.gif)
