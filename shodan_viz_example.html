@@ -1,0 +1,478 @@
+<!-- <link rel="stylesheet" href="https://codepen.io/woj-ciech/pen/JjGjMjz.css"> -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+
+<!-- jQuery Modal -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<style>
+
+ html,body{
+     height: 100%;
+     background: #212121;
+     font-family: 'Ubuntu', sans-serif;
+     line-height: 24px;
+     letter-spacing: 1px;
+}
+ div.hint-content {
+     color: #fff;
+     position: absolute;
+     z-index: 5;
+     padding: 12px 0;
+     opacity: 1;
+     visibility: visible !important;
+     -webkit-transition: opacity .7s ease,visibility .7s ease;
+     transition: opacity .7s ease,visibility .7s ease;
+     pointer-events: none;
+     color: #fff;
+     pointer-events: none
+}
+ div.hint-content::before {
+     width: 0px;
+     bottom: 0;
+     left: 0;
+     content: '';
+     background-color: #fff;
+     height: 1px;
+     position: absolute;
+     transition: width 0.4s;
+}
+ div.hint-content::before {
+     width: 180px;
+     transition: width 0.4s;
+}
+ div.hint-content::after {
+     -webkit-transform-origin: 0 50%;
+     transform-origin: 0 50%;
+     -webkit-transform: rotate(-225deg);
+     transform: rotate(-225deg);
+     bottom: 0;
+     left: 0;
+     width: 80px;
+     content: '';
+     background-color: #fff;
+     height: 1px;
+     position: absolute;
+     opacity: 1;
+     -webkit-transition: opacity .5s ease;
+     transition: opacity .5s ease;
+     transition-delay: 0s;
+     -webkit-transition-delay: 0s;
+     transition-delay: 0s;
+}
+ div.hint-content::after {
+     opacity: 1;
+     visibility: visible;
+}
+ .link {
+     stroke: #c1c1c1;
+     stroke-width: 5px;
+     pointer-events: all;
+}
+ .node circle {
+     pointer-events: all;
+}
+ .modal-container:target {
+     display: flex;
+}
+ .modal {
+     padding: 4rem 2rem;
+     border-radius: .8rem;
+     color: var(--light);
+     background: var(--background);
+     box-shadow: var(--m-shadow, .4rem .4rem 10.2rem .2rem) var(--shadow-1);
+     position: relative;
+     overflow: hidden;
+}
+ .modal__title {
+     font-size: 3.2rem;
+}
+ .modal__text {
+     padding: 0 4rem;
+     margin-top: 4rem;
+     font-size: 1.6rem;
+     line-height: 2;
+}
+ .modal__btn {
+     margin-top: 4rem;
+     padding: 1rem 1.6rem;
+     border: 1px solid var(--border-color);
+     border-radius: 100rem;
+     color: inherit;
+     background: transparent;
+     font-size: 1.4rem;
+     font-family: inherit;
+     letter-spacing: .2rem;
+     transition: .2s;
+     cursor: pointer;
+}
+ .modal__btn:nth-of-type(1) {
+     margin-right: 1rem;
+}
+ .modal__btn:hover, .modal__btn:focus {
+     background: var(--focus);
+     border-color: var(--focus);
+     transform: translateY(-.2rem);
+}
+
+#myModal {
+     position: absolute;
+     margin: 0 auto;
+     top: 50%;
+     left: 50%;
+     top: 50%;
+     transform: translate(-50%, -50%);
+}
+
+
+
+</style>
+<br><center><img src="https://www.offensiveosint.io/content/images/2020/07/OffensiveOsint-logo-RGB-2.png" width="200px height=25px"></center>
+<center><div class="option"></center>
+</div>
+
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<center>
+<svg id="chart3" width="1800" height="1800"></svg>
+</center>
+
+
+<script>
+
+var tooltip = d3.select("body")
+    .append("div")
+    .attr("class", "hint-content")
+
+var modal = d3.select("body")
+    .append("div")
+    .attr("class", "modal-container")
+    .attr("id", "m1-o")
+    .attr('style', '--m-background: transparent;')
+
+var buttons = d3.select(".option").selectAll("button")
+    .data(["port", "org", "city", "country"])
+    .enter()
+    .append("button")
+    .attr("id", function(d) {
+        return d;
+    })
+    .text(function(d) {
+        return d;
+    })
+
+
+function restart(btn, file) {
+
+    d3.json(file, function(error, graph) {
+
+        // --- creating palette as object for Ports, org and Cities to set up dynamic colors
+        // 1) arrays of distinct values
+        let distinctPorts = [];
+        let distinctorg = [];
+        let distinctCities = [];
+        let distinctCountries = [];
+
+
+        for (let i = 0; i < graph.nodes.length; i++) {
+            distinctPorts.push(graph.nodes[i].port);
+            distinctorg.push(graph.nodes[i].org);
+            distinctCities.push(graph.nodes[i].city);
+            distinctCountries.push(graph.nodes[i].country);
+        };
+
+        distinctPorts = Array.from(new Set(distinctPorts));
+        distinctorg = Array.from(new Set(distinctorg));
+        distinctCities = Array.from(new Set(distinctCities));
+        distinctCountries = Array.from(new Set(distinctCountries));
+
+        // 2) palette creation
+        let colorsPorts = {};
+        let colorsorg = {};
+        let colorsCities = {};
+        let colorCountries = {};
+
+
+        function paletteCreation(arr, obj) {
+            for (const key of arr) {
+                obj[key] = `rgb(${parseInt(Math.random()*255)}, ${parseInt(Math.random()*255)}, ${parseInt(Math.random()*255)})`;
+            }
+            return obj
+        }
+
+        colorsCountries = paletteCreation(distinctCountries, colorCountries)
+        colorsPorts = paletteCreation(distinctPorts, colorsPorts);
+        colorsorg = paletteCreation(distinctorg, colorsorg);
+        colorsCities = paletteCreation(distinctCities, colorsCities);
+
+        console.log("org", colorCountries);
+
+        // --- end of creating palettes
+
+        if (error) throw error;
+
+        const svg = d3.select('#chart3'),
+            width = +svg.attr('width'),
+            height = +svg.attr('height');
+
+        let link = svg.selectAll('line')
+            .data(graph.links)
+            .enter().append('line');
+
+        link
+            .attr('class', 'link')
+                        // hidding the link can be done here, by changing the opacity to 0
+                        .attr("opacity", 0)
+            .style("stroke", "#000")
+            .style("stroke-width", "3px")
+
+        let node = svg.selectAll('.node')
+            .data(graph.nodes)
+            .enter().append('g')
+                        .attr('class', 'node')
+            .attr("data-toggle", "modal")
+            .attr("data-target", "#myModal")
+                        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));;
+
+        // creating a circle variable to call it afterward and redesign the colors
+        let circle = node.append("circle")
+            .attr("class", "circle-colors")
+            .attr("r", 4)
+                        .attr("stroke-opacity",1)
+                        .attr("stroke-width",1)
+                        .attr("stroke", "#555")
+            .attr('href', '#m1-o')
+            .attr('id', 'm1-c')
+                        .attr("fill", function(d) {
+                 return colorsPorts[d.port];
+                })
+                        // below is the condition to hide the parent nodes linking the children nodes together
+                        .attr("opacity", d => d.fake === 1 ? 0 : 1)
+                        // setting up the colors dynamically
+                .on('click', function(d) {
+                if (d.fake == "") {
+                let modalTitle = d3.selectAll("h4.modal-title");
+                modalTitle.text(d.ip);
+                let modalBody = d3.selectAll(".modal-body");
+                modalBody.html("Country: " + d.country + "<br>City: " + d.city + "<br>Port: " + d.port + "<br>Organization: " + d.org + "<br>Hostname: " + d.hostnames[0]
+                + "<br>Domain: " + d.domains[0] + "<br>Title: " + d.title + "<br>Link: <a href=https://beta.shodan.io/host/" +
+                d.ip + ">https://beta.shodan.io/host/" + d.ip + "</a>" + "<br>Vulnerabilities: " + d.vulns);}
+                })
+                .on('mouseover.tooltip', function(d) {
+                if (d.fake == "") {
+                tooltip.transition()
+                .duration(300)
+                .style("opacity", .8);
+
+                tooltip.html("Port: " + d.port + "<br>Organization: " + d.org + "<br>City: " + d.city + "<br>Country: " + d.country);}
+                })
+                .on('mouseover.fade', fade(0.1))
+                .on("mouseout.tooltip", function() {
+                tooltip.transition()
+                .duration(100)
+                .style("opacity", 0);
+                })
+                .on('mouseout.fade', fade(1))
+                // on mousemove, when the user is mousing over, it will change the position of the tooltip
+                // this is where the tooltip should be properly placed
+                // side note: the width of the div hint-content was commented, no limit should be set
+                .on("mousemove", function() {
+                tooltip.style("left", (d3.event.pageX + 60) + "px")
+                .style("top", (d3.event.pageY - 160) + "px");
+                })
+                .on('dblclick', releasenode)
+
+        node.append('text')
+            .attr('x', 0)
+            .attr("text-anchor", "middle")
+            .attr("style", "fill: rgb(232, 62, 140")
+
+
+
+
+                // Here, we instantiate the simulation
+        const simulation = d3.forceSimulation().nodes(graph.nodes)
+                        .alpha(0.06)
+            .alphaTarget(0.1);
+
+                // When initiating the simulation, we center the nodes in the middle
+                // following are all our conditions
+
+
+        if (btn == 'init') {
+
+        } else if (btn == 'port') {
+
+            simulation
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(3))
+                .force('link', d3.forceLink().links(graph.links).distance(0))
+                .force("charge", d3.forceManyBody().strength(-30))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                        .on('tick', ticked);
+
+        }
+        else if (btn == 'country') {
+
+                        simulation
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(3))
+                .force('link', d3.forceLink().links(graph.links).distance(0))
+                .force("charge", d3.forceManyBody().strength(-10))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                        .on('tick', ticked);
+
+        }
+
+         else if (btn == 'org') {
+
+                         simulation
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(3))
+                .force('link', d3.forceLink().links(graph.links).distance(0))
+                .force("charge", d3.forceManyBody().strength(-30))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                         .on('tick', ticked);
+
+        } else if (btn == 'city') {
+
+                        simulation
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(3))
+                .force('link', d3.forceLink().links(graph.links).distance(0))
+                .force("charge", d3.forceManyBody().strength(-20))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                        .on('tick', ticked);
+
+        }
+
+        function ticked() {
+            link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            node
+                .attr("cx", function(d) {
+                    return d.x = Math.max(55, Math.min(width - 55, d.x));
+                })
+                .attr("cy", function(d) {
+                    return d.y = Math.max(55, Math.min(height - 55, d.y));
+                })
+            .attr('transform', d => `translate(${d.x},${d.y})`);
+        }
+
+        function dragstarted(d) {
+            // if (!d3.event.active) simulation.alphaTarget(0.1).restart();
+            // d.fx = d.x;
+            // d.fy = d.y;
+        }
+
+        function dragged(d) {
+            // d.fx = d3.event.x;
+            // d.fy = d3.event.y;
+        }
+
+        function dragended(d) {
+            // if (!d3.event.active) simulation.alphaTarget(0);
+            //d.fx = null;
+            //d.fy = null;
+        }
+
+        function releasenode(d) {
+            d.fx = null;
+            d.fy = null;
+        }
+
+        const linkedByIndex = {};
+        graph.links.forEach(d => {
+            linkedByIndex[`${d.source.index},${d.target.index}`] = 1;
+        });
+
+        function isConnected(a, b) {
+            return linkedByIndex[`${a.index},${b.index}`] || linkedByIndex[`${b.index},${a.index}`] || a.index === b.index;
+        }
+
+        function fade(opacity) {
+            return d => {
+                node.style('opacity', function(o) {
+                    return isConnected(d, o) ? 1 : opacity
+                });
+                link.style('stroke-opacity', o => (o.source === d || o.target === d ? 1 : opacity));
+                if (opacity === 1) {
+                    node.style('opacity', 1)
+                        // textElems.style('visibility', 'hidden')
+                    link.style('stroke-opacity', 0.3)
+                }
+            };
+        }
+
+                $("#city").on("click", function() {
+                    circle.attr("fill", function(d) {
+                 return colorsCities[d.city];
+                })
+                });
+
+                $("#port").on("click", function() {
+                    circle.attr("fill", function(d) {
+                 return colorsPorts[d.port];
+                })
+                });
+
+                $("#org").on("click", function() {
+                    circle.attr("fill", function(d) {
+                 return colorsorg[d.org];
+                })
+                });
+
+                $("#country").on("click", function() {
+                    circle.attr("fill", function(d) {
+                 return colorsCountries[d.country];
+                })
+                });
+
+    }
+    )
+}
+
+// when running the function for the first time, we have a normal force centered in the middle
+// we are passing a random word in the restart function
+// Here, I start with the port dataviz, you can change it!
+restart("port", "https://raw.githubusercontent.com/woj-ciech/Shomap/main/shomap_data_port.json");
+
+$("#port").on("click", function() {
+    restart("port", "https://raw.githubusercontent.com/woj-ciech/Shomap/main/shomap_data_port.json");
+});
+$("#org").on("click", function() {
+    restart("org", "https://raw.githubusercontent.com/woj-ciech/Shomap/main/shomap_data_org.json");
+});
+$("#city").on("click", function() {
+    restart("city", "https://raw.githubusercontent.com/woj-ciech/Shomap/main/shomap_data_city.json");
+});
+$("#country").on("click", function() {
+    restart("country", "https://raw.githubusercontent.com/woj-ciech/Shomap/main/shomap_data_country.json");
+});
+</script>
