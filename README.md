@@ -2,7 +2,7 @@
 ## Create visualization from Shodan query
 It takes your query as an input, e.g. "hostname:gov.pl" and produces files necessary to visualize and group it accordingly by port, country, city or ISP.
 
-article - https://offensiveosint.io
+article - https://offensiveosint.io/offensive-osint-s03-e07-shomap-advanced-shodan-visualization
 
 # Installation
 ```
@@ -10,6 +10,7 @@ article - https://offensiveosint.io
 └─# cd Shodan_viz
 └─# python3 install -r requirements.txt
 ```
+Put your Shodan API key in line 36 in shomap.py
 
 # Usage
 ```
