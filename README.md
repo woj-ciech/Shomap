@@ -8,7 +8,7 @@ article - https://offensiveosint.io/offensive-osint-s03-e07-shomap-advanced-shod
 ```
 └─# git clone https://github.com/woj-ciech/Shodan_viz
 └─# cd Shodan_viz
-└─# python3 install -r requirements.txt
+└─# pip3 install shodan
 ```
 Put your Shodan API key in line 36 in shomap.py
 
